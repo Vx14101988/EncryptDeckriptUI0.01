@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Fungsi untuk menampilkan semua perintah OpenSSL yang tersedia
+daftar_perintah() {
+    perintah=$(openssl list -commands)
+    dialog --msgbox "Perintah OpenSSL yang tersedia:\n$perintah" 20 70
+}
+
+# Fungsi untuk memilih file
+pilih_file() {
+    file=$(dialog --stdout --title "Pilih File" --fselect $HOME/ 14 48)
+    echo "$file"
+}
+
+# Fungsi untuk enkripsi file dengan AES-256
+enkripsi_file() {
+    local file="$1"
+    local output="${file}.enc"
+    openssl enc -aes-256-cbc -salt -in "$file" -out "$output"
+    dialog --msgbox "File berhasil dienkripsi dengan AES-256.\nOutput: $output" 10 50
+}
+
+# Fungsi untuk dekripsi file dengan AES-256
+dekripsi_file() {
+    local file="$1"
+    local output="${file%.enc}.dec"
+    openssl enc -aes-256-cbc -d -in "$file" -out "$output"
+    dialog --msgbox "File berhasil didekripsi dengan AES-256.\nOutput: $output" 10 50
+}
+
+# Fungsi untuk hashing file dengan SHA-256
+hash_file() {
+    local file="$1"
+    local output="${file}.sha256"
+    openssl dgst -sha256 -out "$output" "$file"
+    dialog --msgbox "File berhasil di-hash dengan SHA-256.\nOutput: $output" 10 50
+}
+
+# Fungsi untuk menampilkan menu utama
+menu() {
+    while true; do
+        pilihan=$(dialog --clear --title "Menu OpenSSL" \
+            --menu "Pilih opsi" 20 60 6 \
+            1 "Daftar Perintah OpenSSL" \
+            2 "Enkripsi File (AES-256)" \
+            3 "Dekripsi File (AES-256)" \
+            4 "Hash File (SHA-256)" \
+            5 "Exit" \
+            --stdout)
+        
+        case $pilihan in
+            1)
+                daftar_perintah
+                ;;
+            2)
+                file=$(pilih_file)
+                if [[ -n "$file" ]]; then
+                    enkripsi_file "$file"
+                fi
+                ;;
+            3)
+                file=$(pilih_file)
+                if [[ -n "$file" ]]; then
+                    dekripsi_file "$file"
+                fi
+                ;;
+            4)
+                file=$(pilih_file)
+                if [[ -n "$file" ]]; then
+                    hash_file "$file"
+                fi
+                ;;
+            5)
+                break
+                ;;
+            *)
+                dialog --msgbox "Pilihan tidak valid." 10 50
+                ;;
+        esac
+    done
+}
+
+menu
